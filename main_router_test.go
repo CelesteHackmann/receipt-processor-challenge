@@ -352,3 +352,105 @@ func TestProcessReceiptInvalidTotal(t *testing.T) {
 
 	teardown()
 }
+
+// TestCalculatePointsInvalidId
+func TestCalculatePointsInvalidId(t *testing.T) {
+	setup()
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = &http.Request{
+		Header: make(http.Header),
+	}
+	c.Request.Method = "GET"
+	c.Params = []gin.Param{
+		{
+			Key:   "id",
+			Value: "Receipt10",
+		},
+	}
+
+	getPoints(c)
+	expectedString := "No receipt found for that ID."
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, expectedString, w.Body.String())
+
+	teardown()
+}
+
+// TestCalculatePointsReceipt1
+func TestCalculatePointsReceipt1(t *testing.T) {
+	setup()
+	expectedResponse, _ := json.Marshal(PointsGeneratedResponse{Points: 28})
+	receiptsMap["Receipt1"] = validReceipt1
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = &http.Request{
+		Header: make(http.Header),
+	}
+	c.Request.Method = "GET"
+	c.Params = []gin.Param{
+		{
+			Key:   "id",
+			Value: "Receipt1",
+		},
+	}
+
+	getPoints(c)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, string(expectedResponse), w.Body.String())
+
+	teardown()
+}
+
+// TestCalculatePointsReceipt2
+func TestCalculatePointsReceipt2(t *testing.T) {
+	setup()
+	expectedResponse, _ := json.Marshal(PointsGeneratedResponse{Points: 109})
+	
+	receiptsMap["Receipt1"] = validReceipt2
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = &http.Request{
+		Header: make(http.Header),
+	}
+	c.Request.Method = "GET"
+	c.Params = []gin.Param{
+		{
+			Key:   "id",
+			Value: "Receipt1",
+		},
+	}
+
+	getPoints(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, string(expectedResponse), w.Body.String())
+
+	teardown()
+}
+
+// // TestCalculatePointsReceipt3
+func TestCalculatePointsReceipt3(t *testing.T) {
+	setup()
+	expectedResponse, _ := json.Marshal(PointsGeneratedResponse{Points: 62})
+
+	receiptsMap["Receipt12"] = validReceipt3
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = &http.Request{
+		Header: make(http.Header),
+	}
+	c.Request.Method = "GET"
+	c.Params = []gin.Param{
+		{
+			Key:   "id",
+			Value: "Receipt12",
+		},
+	}
+
+	getPoints(c)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, string(expectedResponse), w.Body.String())
+
+	teardown()
+}
