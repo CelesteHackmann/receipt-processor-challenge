@@ -5,19 +5,20 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gopkg.in/validator.v2"
 )
 
 type Receipt struct {
-	Retailer     string `json:"retailer"`
-	PurchaseDate string `json:"purchaseDate"`
-	PurchaseTime string `json:"purchaseTime"`
-	Items        []Item `json:"items"`
-	Total        string `json:"total"`
+	Retailer     string `json:"retailer" binding:"required" validate:"regexp=^[\\w\\s\\-&]+$"`
+	PurchaseDate string `json:"purchaseDate" binding:"required" validate:"validDate"`
+	PurchaseTime string `json:"purchaseTime" binding:"required" validate:"validTime"`
+	Items        []Item `json:"items" binding:"required,dive" validate:"min=1"`
+	Total        string `json:"total" binding:"required" validate:"regexp=^\\d+\\.\\d{2}$"`
 }
 
 type Item struct {
-	ShortDescription string `json:"shortDescription"`
-	Price            string `json:"price"`
+	ShortDescription string `json:"shortDescription" binding:"required" validate:"regexp=^[\\w\\s\\-&]+$"`
+	Price            string `json:"price" binding:"required" validate:"regexp=^\\d+\\.\\d{2}$"`
 }
 
 type ReceiptCreatedResponse struct {
@@ -31,6 +32,10 @@ var receiptsMap map[string]Receipt = make(map[string]Receipt)
 var receiptNum int = 0
 
 func main() {
+	// Add validation functions for Time and Date
+	validator.SetValidationFunc("validTime", validTime)
+	validator.SetValidationFunc("validDate", validDate)
+
 	// Create Gin router
 	router := gin.Default()
 
@@ -47,6 +52,11 @@ func processReceipt(c *gin.Context) {
 
 	// Check if the requestBody and resulting Receipt is valid, if not it returns 400 BadRequest
 	if err := c.BindJSON(&newReceipt); err != nil {
+		c.String(http.StatusBadRequest, "The receipt is invalid.")
+		return
+	}
+	// Validate the struct
+	if err := validator.Validate(newReceipt); err != nil {
 		c.String(http.StatusBadRequest, "The receipt is invalid.")
 		return
 	}
